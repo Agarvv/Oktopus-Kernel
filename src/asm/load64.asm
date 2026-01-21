@@ -7,6 +7,7 @@
 ; 0x135  Logical block addres high 
 ; 0x1F6 flags, drive mode, last lba bits...
 ; 0x1F7 Status and commands
+; 0x1F1 Error 
 
 ; when read 0x1F7 returns one byte: 
 ; bit 7   disk is busy
@@ -46,41 +47,84 @@
 ; meaning data request is ready. i'll read data from port 0x1F0 and load it into memory. 
 ; and so on in loop until disk isnt bussy anymore.
 
-load_kernel_64:   
+test_ports:
+    mov al, 'T' 
+    mov dx, 0x3F8 
+    out dx, al  
+
+    mov dx, 0x1F7
+    in al, dx
+    call print_hex_byte 
+    jmp $
+
+
+
+load_kernel_64:
   
- 
+  
    
    ; check if disk can perform operations
-    call disk_ok 
+    call disk_ok  
+    
 
     ; load LBA
     ; LBA LOW 
     mov al, 0x21 
     out 0x1F3, al 
+    call delay 
 
     ; LBA MEDIUM 
     mov al, 0x00 
-    out 0x1F4, al 
+    out 0x1F4, al  
+    call delay 
 
     ; LBA HIGH
     out 0x1F5, al 
+    call delay 
 
     ; set sectors to read
     mov al, 10 
     out 0x1F2, al 
+    call delay
 
     ; set READ comand 
     mov al, 0x20 
     out 0x1F7, al 
+   call delay
     
     ; now do polling and read data from port 0x1F0.
     call polling 
+    
+    mov al, 'f' 
+    mov dx, 0x3F8 
+    out dx, al
 
 
 
    
 
     jmp $
+
+delay:
+    mov dx, 0x3F6    
+    in al, dx   
+
+    mov dx, 0x3F6    
+    in al, dx   
+
+    mov dx, 0x3F6    
+    in al, dx   
+
+    mov dx, 0x3F6    
+    in al, dx   
+
+    ret
+
+
+
+
+
+
 
 disk_ok: 
    ; 0x1F6 takes something like this:
@@ -100,13 +144,16 @@ disk_ok:
     ;     ^^^^ last lba bits
     
     ; i'll use 11100000 (0xE0)
-    mov al, 0xE0   
-    out 0x1F6, al  
+    mov al, 0xE0
+   
+   out 0x1F6, al
+   call delay
 
    .disk_bussy: 
-      mov al, 'D'
-mov dx, 0x3F8
-out dx, al
+      mov al, 'E'
+      mov dx, 0x3F8
+      out dx, al
+      call delay
  
 
       ; 00000000 
@@ -114,50 +161,99 @@ out dx, al
 
       ; apply mask to leave only that bit, and if it is not zero it means the disk is bussy
       ; so jump until disk isnt bussy anymore. 
-      in al, 0x1F7 
-      and al, 0x80 
-      jnz .disk_bussy 
+     .in:
+      mov al, 'c'
+      mov dx, 0x3F8 
+      out dx, al
+
+
+      call delay 
+     mov dx, 0x1F7
+      in al, dx 
+     and al, 0x80 
+     ; call print_hex_byte  
+    
+     ; jmp $ 
+     
+      jnz .in
+       
    
 
    .disk_ready:
       ; 00000000 
       ;  ^ DISK READY 
-      in al, 0x1F7 
+      mov dx, 0x1F7
+      in al, dx 
+
       and al, 0x40 
+     ; call print_hex_byte 
+     ; jmp $
+
+
       jz .disk_ready 
-      ret
+      ret 
+
+   .err:
+    in al, 0x1F1
+    call print_hex_byte
+    jmp $
+
+print_hex_byte:
+    mov bl, al
+    shr al, 4
+    call .nibble
+    mov al, bl
+    and al, 0x0F
+    call .nibble
+    ret
+.nibble:
+    cmp al, 9
+    jg .letter
+    add al, '0'
+    jmp .print
+.letter:
+    add al, 'A' - 10
+.print:
+    mov dx, 0x3F8
+    out dx, al
+    ret
+     
 
 
 polling: 
- mov al, 'D'
-mov dx, 0x3F8
-out dx, al
-
-    ; loop until there isnt any data to transfer anymore and disk is not busy anymore
-    ; read busy status
-    in al, 0x1F7 
-    ; mask the busy bit
-    and al, 0x80 
-
-    ; save the status so we can work here with conditional stuff
-    pushf
     
-    ; read the DRQ bit
-    in al, 0x1F7 
+    ; read the DRQ bit 
+    mov dx, 0x1F7 
+    in al, dx 
     ; mask the drq bit
-    and al, 0x08 
+    and al, 0x08  
+  
 
-    jz .notread 
+    jz .notread
 
     .read:
-      in ax, 0x1F0
-    
-    
-    .notread:
-      ; restore the status 
-      popf
+      in ax, 0x1F0 
 
-      ; if that bit is not zero it means it is busy so loop until it isnt bussy anymore
-     jnz polling
+      mov al, 'r' 
+      mov dx, 0x3F8
+      out dx, al
+       
+    
+    
+    .notread: 
+      mov al, 'n' 
+      mov dx, 0x3F8  
+      out dx, al 
+    
+
+   
+     mov dx, 0x1F7  
+     in al, dx 
+    and al, 0x80 
+   call print_hex_byte 
+    jmp $ 
+    jnz polling
+
+
    
    ret  

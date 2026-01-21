@@ -1,4 +1,4 @@
-CC32    := i386-elf-gcc
+CC31    := i386-elf-gcc
 CC64    := x86_64-elf-gcc
 LD32    := i386-elf-ld
 LD64    := x86_64-elf-ld
@@ -71,7 +71,13 @@ $(IMG): $(STAGE1_BIN) $(STAGE2_BIN) $(KERNEL_BIN)
 
 
 run: $(IMG)
-	$(QEMU) -hda $(IMG) -serial stdio -s 
+	qemu-system-x86_64 \
+		-drive file=$(IMG),format=raw \
+		-serial stdio \
+		-s \
+		-no-reboot \
+		-no-shutdown
+
 
 
 

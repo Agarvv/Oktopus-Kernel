@@ -151,7 +151,7 @@ times ($$-$) & 1 db 0
 dap:
     db 0x10       ; size
     db 0x00       ; reserved
-    dw 10          ; number of sectors
+    dw 50          ; number of sectors
     dw 0x0000     ; offset = 0
     dw 0x1000     ; segment = 0x1000 → REAL MODE addr = 0x10000
     dd 1          ; LBA low
