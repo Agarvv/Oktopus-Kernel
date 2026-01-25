@@ -47,6 +47,37 @@
 ; meaning data request is ready. i'll read data from port 0x1F0 and load it into memory. 
 ; and so on in loop until disk isnt bussy anymore.
 
+ata_reset:
+    mov dx, 0x3F6
+    mov al, 0x04
+    out dx, al
+    call delay
+    mov al, 0x00
+    out dx, al
+    call delay
+    ret
+
+ata_wait_ready:
+.wait: 
+   mov al, 'w' 
+   mov dx, 0x3F8 
+   out dx, al 
+
+    mov dx, 0x1F7
+    in al, dx 
+   ; call print_hex_byte 
+    test  al, 0x80
+    jnz .wait
+    test al, 0x40
+    jz .wait
+    ret
+
+
+
+
+
+
+
 test_ports:
     mov al, 'T' 
     mov dx, 0x3F8 
@@ -62,7 +93,8 @@ test_ports:
 load_kernel_64:
   
   
-   
+  call ata_reset 
+  call ata_wait_ready 
    ; check if disk can perform operations
     call disk_ok  
     
@@ -249,8 +281,8 @@ polling:
    
      mov dx, 0x1F7  
      in al, dx 
-    and al, 0x80 
-   call print_hex_byte 
+  ;  and al, 0x80 
+  ; call print_hex_byte 
     jmp $ 
     jnz polling
 

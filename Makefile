@@ -69,21 +69,20 @@ $(IMG): $(STAGE1_BIN) $(STAGE2_BIN) $(KERNEL_BIN)
 	$(DD) if=$(STAGE2_BIN) of=$@ bs=512 seek=1 conv=notrunc
 	$(DD) if=$(KERNEL_BIN) of=$@ bs=512 seek=33 conv=notrunc
 
-
 run: $(IMG)
-	qemu-system-x86_64 \
-		-drive file=$(IMG),format=raw \
-		-serial stdio \
-		-s \
-		-no-reboot \
-		-no-shutdown
+	qemu-system-i386 \
+    -drive file=build/disk.img,format=raw,if=ide \
+    -serial stdio \
+    -m 512M \
+    -no-reboot \
+    -no-shutdown \
+    -s
 
 
 
 
-
-clean:
-	rm -rf $(BUILD)/*
+clean: rm -rf $(BUILD)/*
 
 .PHONY: all clean run
+
 
