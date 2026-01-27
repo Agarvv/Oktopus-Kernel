@@ -1,8 +1,36 @@
 #include <bootloader/main/longmode.h>
 #include <bootloader/main/paging.h>
-//#include <kernel/drivers/video/vga/vga.h>
+#define VGA_TEXT_VIDEO_MEMORY 0xB8000
+#define VIDEO_ROWS 25 
+#define VIDEO_COLS 80
 
-extern void load_kernel_64();
+
+extern void load_kernel_64(); 
+
+int putcha(int row, int col, char c, char f) {
+
+    int offset = (row * VIDEO_ROWS) + col;
+
+    unsigned short *addr = (unsigned short *)VGA_TEXT_VIDEO_MEMORY + offset;
+
+    c = (unsigned short)c;
+
+    f = (unsigned short)f;
+
+    *addr = (f << 8) | c;
+
+    return 0;
+}
+
+int put(char str[], int lenstr) {
+    int row = 0;
+    int col = 0;
+
+    for(int i = 0; i < lenstr; i++) {
+        putcha(row, col, str[i], 0x1F);
+        col++;
+    }
+}
 
 
 void enable_physical_addr_extension() {
@@ -68,4 +96,6 @@ void long_mode_start() {
   enable_physical_addr_extension(); 
   enable_long_mode(); 
   load_kernel_64(); 
+
+  put("Tado es gei", 12);
 }

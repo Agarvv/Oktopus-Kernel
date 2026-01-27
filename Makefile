@@ -1,4 +1,4 @@
-CC31    := i386-elf-gcc
+CC32    := i386-elf-gcc
 CC64    := x86_64-elf-gcc
 LD32    := i386-elf-ld
 LD64    := x86_64-elf-ld
@@ -15,16 +15,19 @@ STAGE2_SRC := $(shell find src/bootloader/stage2 -name "*.c")
 KERNEL_SRC := $(shell find src/kernel -name "*.c")
 ASM_SRC    := $(shell find src/asm -name "*.asm")
 
+KERNEL_MAIN_OBJ := $(OBJ_DIR)/kernel/main/main.o
+
+KERNEL_OTHER_OBJS := $(filter-out $(KERNEL_MAIN_OBJ), \
+                     $(patsubst src/kernel/%.c,$(OBJ_DIR)/kernel/%.o,$(KERNEL_SRC)))
+
 IMG        := $(BUILD)/disk.img
 STAGE1_BIN := $(BUILD)/stage1.bin
 STAGE2_BIN := $(BUILD)/stage2.bin
 KERNEL_BIN := $(BUILD)/kernel.bin
 
-STAGE2_OBJS := $(patsubst src/bootloader/stage2/%.c,$(OBJ_DIR)/boot2_%.o,$(STAGE2_SRC))
-KERNEL_OBJS := $(patsubst src/kernel/%.c,$(OBJ_DIR)/kernel_%.o,$(KERNEL_SRC))
-ASM_OBJS    := $(patsubst src/asm/%.asm,$(OBJ_DIR)/%.o,$(ASM_SRC))
-
-
+STAGE2_OBJS := $(patsubst src/bootloader/stage2/%.c,$(OBJ_DIR)/boot2/%.o,$(STAGE2_SRC))
+KERNEL_OBJS := $(patsubst src/kernel/%.c,$(OBJ_DIR)/kernel/%.o,$(KERNEL_SRC))
+ASM_OBJS    := $(patsubst src/asm/%.asm,$(OBJ_DIR)/asm/%.o,$(ASM_SRC))
 
 CFLAGS32 := -ffreestanding -m32 -fno-builtin -fno-stack-protector -O0 \
             -I$(INC_DIR) \
@@ -32,26 +35,22 @@ CFLAGS32 := -ffreestanding -m32 -fno-builtin -fno-stack-protector -O0 \
             -Wa,--32 \
             -fno-asynchronous-unwind-tables -fno-unwind-tables
 
-
 CFLAGS64 := -ffreestanding -fno-builtin -fno-stack-protector -O0 -I$(INC_DIR)
-
-$(shell mkdir -p $(OBJ_DIR))
-$(shell mkdir -p $(BUILD))
 
 all: $(IMG) run
 
 $(STAGE1_BIN): $(STAGE1_SRC)
 	$(NASM) -f bin $< -o $@
 
-$(OBJ_DIR)/boot2_%.o: src/bootloader/stage2/%.c
+$(OBJ_DIR)/boot2/%.o: src/bootloader/stage2/%.c
 	mkdir -p $(dir $@)
 	$(CC32) $(CFLAGS32) -c $< -o $@
 
-$(OBJ_DIR)/kernel_%.o: src/kernel/%.c
+$(OBJ_DIR)/kernel/%.o: src/kernel/%.c
 	mkdir -p $(dir $@)
 	$(CC64) $(CFLAGS64) -c $< -o $@
 
-$(OBJ_DIR)/%.o: src/asm/%.asm
+$(OBJ_DIR)/asm/%.o: src/asm/%.asm
 	mkdir -p $(dir $@)
 	$(NASM) -f elf32 $< -o $@
 
@@ -59,9 +58,15 @@ $(STAGE2_BIN): $(STAGE2_OBJS) $(ASM_OBJS)
 	$(LD32) -m elf_i386 -T stage2.ld -o $(BUILD)/stage2.elf $^
 	objcopy -O binary $(BUILD)/stage2.elf $@
 
-$(KERNEL_BIN): $(KERNEL_OBJS)
-	$(LD64) -m elf_x86_64 -T kernel.ld -o $(BUILD)/kernel.elf $^
+
+
+
+$(KERNEL_BIN): $(KERNEL_MAIN_OBJ) $(KERNEL_OTHER_OBJS)
+	$(LD64) -m elf_x86_64 -T kernel.ld -o $(BUILD)/kernel.elf \
+		$(KERNEL_MAIN_OBJ) $(KERNEL_OTHER_OBJS)
 	objcopy -O binary $(BUILD)/kernel.elf $@
+
+
 
 $(IMG): $(STAGE1_BIN) $(STAGE2_BIN) $(KERNEL_BIN)
 	$(DD) if=/dev/zero of=$@ bs=512 count=32768
@@ -70,19 +75,9 @@ $(IMG): $(STAGE1_BIN) $(STAGE2_BIN) $(KERNEL_BIN)
 	$(DD) if=$(KERNEL_BIN) of=$@ bs=512 seek=33 conv=notrunc
 
 run: $(IMG)
-	qemu-system-i386 \
-    -drive file=build/disk.img,format=raw,if=ide \
-    -serial stdio \
-    -m 512M \
-    -no-reboot \
-    -no-shutdown \
-    -s
+	$(QEMU) -drive file=$(IMG),format=raw,if=ide -serial stdio -m 512M -no-reboot -no-shutdown -s
 
-
-
-
-clean: rm -rf $(BUILD)/*
+clean:
+	rm -rf $(BUILD)/*
 
 .PHONY: all clean run
-
-

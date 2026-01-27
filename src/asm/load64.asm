@@ -78,34 +78,50 @@ load_kernel_64:
     mov al, 0x20 
     mov dx, 0x1F7 
     out dx, al 
-    mov si, KERNEL_ADDR
+
+    mov esi, KERNEL_ADDR
+    mov cx, 10 
     
     .polling:
-           .bsy:
+                   
+	  .bsy:   
+	      
+
           	 mov dx, 0x1F7 
         	 in al, dx
    		 test al, 0x80 
 	 	 jnz .bsy
-	   .drq:
-	 	 mov dx, 0x1F7 
-		 in al, dx 
-		 test al, 0x08 
-		 jz .drq 
+	   .drq: 
+	         test cx, cx  
+		 jnz .continue 
+		 ret
+
+		 .continue: 
+
+	 		 mov dx, 0x1F7 
+			 in al, dx 
+			 test al, 0x08 
+			 jz .drq
+		  	
 
      mov bx, 256 
      mov dx, 0x1F0 
-     
+         
      .read:
     	  in ax, dx 
- 	  mov [si], ax
-	  add si, 2
+ 	  mov [esi], ax
+	  add esi, 2
  	  dec bx 
   	  jnz .read  
-
+      dec cx  
       jmp .polling 
    
 
 
+    mov dx, 0x3F8
+    mov al, 'R'  
+    out dx, al 
 
     jmp $
+
        
