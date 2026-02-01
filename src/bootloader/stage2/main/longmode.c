@@ -4,11 +4,23 @@
 #define VIDEO_ROWS 25 
 #define VIDEO_COLS 80
 
+// 64 bit addr format example (0xB8000)
+// 00000000 00000000 00000000 00000000 00000000 00001011 10000000 00000000
+
+// bits 63-48: Bit Extension 
+// bits 47-39 PML4 Index (9 bits)
+// bits 38-30 PDPT index (9 bits)
+// bits 29-21 PD Index (9 bits)
+// bits 20-12 PT Index (9 bits)
+// bits 11-0 Offset (12 Bits)
+
+// 000000000
+
+
 
 extern void load_kernel_64(); 
 
 int putcha(int row, int col, char c, char f) {
-
     int offset = (row * VIDEO_ROWS) + col;
 
     unsigned short *addr = (unsigned short *)VGA_TEXT_VIDEO_MEMORY + offset;
@@ -36,7 +48,6 @@ int put(char str[], int lenstr) {
 void enable_physical_addr_extension() {
     
 
-  unsigned long long pd_addr = (unsigned long long)&page_directory << 12; 
 	page_directory_pointer_table[0] = 0x0000000000000001 | pd_addr;
   
   unsigned long long pt_addr = (unsigned long long)&page_table << 12; 
