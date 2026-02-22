@@ -46,6 +46,7 @@ int put(char str[], int lenstr) {
 
 
 void enable_physical_addr_extension() {
+	unsigned long long pd_addr = (unsigned long long)&page_directory;
     
 
 	page_directory_pointer_table[0] = 0x0000000000000001 | pd_addr;
@@ -90,6 +91,20 @@ void enable_long_mode() {
     : "r"(&page_map_level_four)
     : "eax", "memory"
    );
+
+
+
+       asm volatile(
+        "mov %%cr0, %%eax\n"
+        "or $0x80000000, %%eax\n"   // Bit 31 = PG
+        "mov %%eax, %%cr0\n"
+        : 
+        : 
+        : "eax", "memory"
+    );
+
+
+
 	
   // in order to activate long mode, i have to set bit eigth (Long mode enable) of EFER msr to 1
   asm volatile(
