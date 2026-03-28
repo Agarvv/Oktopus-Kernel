@@ -28,7 +28,8 @@ print_hex_byte:
     ret
 
 
-load_kernel_64: 
+load_kernel_64:
+     
     .ata_wait:
          .busy: 
    		 mov dx, 0x1F7 ;status 
@@ -41,9 +42,9 @@ load_kernel_64:
                  test al, 0x40 
                  jz .ready 
     
-    ; mov al, 'R'  
-    ; mov dx, 0x3F8  
-    ; out dx, al 
+     mov al, 'P'  
+     mov dx, 0x3F8  
+     out dx, al 
 
     mov al, 0xE0     
     mov dx, 0x1F6
@@ -93,8 +94,9 @@ load_kernel_64:
 	 	 jnz .bsy
 	   .drq: 
 	         test cx, cx  
-		 jnz .continue 
-		 ret
+		 jnz .continue
+
+		 jmp .entry
 
 		 .continue: 
 
@@ -115,12 +117,14 @@ load_kernel_64:
   	  jnz .read  
       dec cx  
       jmp .polling 
-   
 
 
     mov dx, 0x3F8
-    mov al, 'R'  
+    mov al, 'I'  
     out dx, al 
+
+    .entry: 
+    	jmp 0x18:0x100000
 
     jmp $
 

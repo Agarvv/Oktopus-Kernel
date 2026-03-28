@@ -1,4 +1,11 @@
+#include<kernel/drivers/video/vga/vga.h>
+#include<kernel/terminal/terminal.h>
 
 int _start() {
-    return 0;
+  // clear_terminal();
+    
+
+   puts("holai", 6); 
+
+    while(1);
 }

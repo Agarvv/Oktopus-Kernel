@@ -179,11 +179,12 @@ db 11001111b
 db 0x00
  
 ; 64 bit code 
-dw 0xFFFF 
-dw 0x0000 
-db 0x00 
-db 10011010b 
-db 10101111b
+dw 0xFFFF
+dw 0x0000
+db 0x00
+db 10011010b
+db 11001111b
+db 0x00
 gdt_end:
 
 gdt_des:
