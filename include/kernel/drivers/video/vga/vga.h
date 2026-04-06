@@ -4,4 +4,6 @@
 
 
 int putchar(int row, int col, char c, char f); 
+
+
 int puts(char str[], int lenstr);  

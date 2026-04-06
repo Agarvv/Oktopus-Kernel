@@ -171,5 +171,6 @@ void long_mode_start() {
  load_kernel_64();
 
   put("pipo", 5);
+  while(1);
 
 }

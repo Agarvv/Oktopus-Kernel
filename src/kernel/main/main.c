@@ -2,10 +2,18 @@
 #include<kernel/terminal/terminal.h>
 
 int _start() {
-  // clear_terminal();
+ // clear_terminal();
     
 
-   puts("holai", 6); 
+  puts("pene", 5);
+
+
+
+
+
+
+
+
 
     while(1);
 }

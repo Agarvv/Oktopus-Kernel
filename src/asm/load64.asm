@@ -124,7 +124,7 @@ load_kernel_64:
     out dx, al 
 
     .entry: 
-    	jmp 0x18:0x100000
+	jmp 0x18:0x100000
 
     jmp $
 
