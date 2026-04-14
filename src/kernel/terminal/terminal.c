@@ -6,7 +6,7 @@ void clear_terminal() {
         
         for(int cols = 0; cols < VIDEO_COLS; cols++) 
         {
-          putchar(rows, cols, 'a', 0x07); 
+          putchar(rows, cols, ' ', 0x07); 
         }
         
     }

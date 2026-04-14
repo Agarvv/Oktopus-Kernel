@@ -5,8 +5,7 @@ int _start() {
  clear_terminal();
     
 
-  puts("Oktopus", 8);
-
+  puts("PLVS VLTRA KERNEL (PRE ALPHA)", 31);
 
 
 
