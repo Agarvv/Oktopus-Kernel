@@ -6,7 +6,8 @@
 __attribute__((section(".text.boot")))
 void _start() {
     
-    idt_start();  // initializes the Interrupt Descriptor Table with entries  
+   // idt_start();  // initializes the Interrupt Descriptor Table with entries  
+		  //
     
     long_mode_start(); // Paging Config and Long mode Start 
     
